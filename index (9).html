@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamVault - Premium Live TV</title>
+  <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a28;
+      --bg-card-hover: #222236;
+      --accent: #6c5ce7;
+      --accent-light: #a29bfe;
+      --accent-glow: rgba(108, 92, 231, 0.3);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a0;
+      --text-muted: #55556a;
+      --success: #00b894;
+      --danger: #e74c3c;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-light: rgba(255, 255, 255, 0.1);
+      --glass: rgba(255, 255, 255, 0.03);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+    /* Header */
+    header {
+      background: linear-gradient(180deg, rgba(108, 92, 231, 0.08) 0%, transparent 100%);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #e74c3c);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .logo-text {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .header-info { display: flex; align-items: center; gap: 16px; }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(231, 76, 60, 0.15);
+      border: 1px solid rgba(231, 76, 60, 0.3);
+      padding: 5px 12px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; color: #e74c3c;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px; background: #e74c3c;
+      border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .channel-count { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+    /* Main Layout */
+    .main-container { display: flex; flex: 1; overflow: hidden; }
+
+    /* Player */
+    .player-section { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #000; }
+
+    .player-wrapper {
+      flex: 1; position: relative; background: #000;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+
+    .video-js { width: 100% !important; height: 100% !important; }
+
+    .video-js .vjs-big-play-button {
+      background: var(--accent) !important; border: none !important;
+      border-radius: 50% !important; width: 70px !important; height: 70px !important;
+      line-height: 70px !important; font-size: 28px !important;
+      box-shadow: 0 0 40px var(--accent-glow); transition: var(--transition);
+    }
+    .video-js .vjs-big-play-button:hover { transform: scale(1.1); box-shadow: 0 0 60px var(--accent-glow); }
+
+    .video-js .vjs-control-bar {
+      background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%) !important;
+      height: 50px !important; padding: 0 8px;
+    }
+    .video-js .vjs-play-progress { background: var(--accent) !important; }
+    .video-js .vjs-slider { background: rgba(255,255,255,0.15) !important; }
+
+    /* Now Playing */
+    .now-playing {
+      background: var(--bg-secondary); border-top: 1px solid var(--border);
+      padding: 12px 24px; display: flex; align-items: center; gap: 14px;
+    }
+
+    .np-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), #e74c3c);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .np-details { flex: 1; min-width: 0; }
+
+    .np-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--accent-light); font-weight: 600; margin-bottom: 2px;
+    }
+
+    .np-channel-name {
+      font-size: 15px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .np-category { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+
+    .np-status {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; flex-shrink: 0;
+    }
+
+    .np-status.live {
+      background: rgba(0, 184, 148, 0.12); color: var(--success);
+      border: 1px solid rgba(0, 184, 148, 0.25);
+    }
+
+    .np-status .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--success); animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 360px; background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+
+    .sidebar-header { padding: 18px 20px 0; }
+
+    .sidebar-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar-title .material-symbols-outlined { font-size: 20px; color: var(--accent-light); }
+
+    /* Search */
+    .search-box { position: relative; margin-bottom: 14px; }
+
+    .search-box input {
+      width: 100%; padding: 10px 14px 10px 40px;
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 13px; font-family: inherit; outline: none; transition: var(--transition);
+    }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    .search-box .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 18px; color: var(--text-muted); pointer-events: none;
+    }
+
+    /* Category Tabs */
+    .category-tabs {
+      display: flex; gap: 6px; padding-bottom: 14px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .category-tabs::-webkit-scrollbar { display: none; }
+
+    .cat-tab {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; transition: var(--transition);
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-secondary); user-select: none;
+    }
+    .cat-tab:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .cat-tab.active {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+
+    /* Channel List */
+    .channel-list { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
+
+    .channel-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: var(--transition);
+      margin-bottom: 4px; position: relative; overflow: hidden;
+      animation: fadeInUp 0.3s ease both;
+    }
+
+    .channel-item::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      opacity: 0; background: linear-gradient(135deg, var(--accent-glow), transparent);
+      transition: var(--transition);
+    }
+    .channel-item:hover { background: var(--bg-card-hover); }
+    .channel-item:hover::before { opacity: 1; }
+
+    .channel-item.active {
+      background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(108, 92, 231, 0.05));
+      border: 1px solid rgba(108, 92, 231, 0.3);
+    }
+    .channel-item.active .ch-name { color: var(--accent-light); font-weight: 600; }
+    .channel-item.active .ch-number { color: var(--accent-light); }
+
+    .ch-number {
+      width: 26px; height: 26px; border-radius: 6px; background: var(--bg-card);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      flex-shrink: 0; position: relative; z-index: 1;
+    }
+
+    .ch-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0; position: relative; z-index: 1;
+      font-weight: 700; text-transform: uppercase; letter-spacing: -0.5px; color: #fff;
+    }
+
+    .ch-info { flex: 1; min-width: 0; position: relative; z-index: 1; }
+
+    .ch-name {
+      font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
+    }
+    .ch-category { font-size: 11px; color: var(--text-muted); }
+
+    .ch-live-indicator {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+      flex-shrink: 0; position: relative; z-index: 1;
+      opacity: 0; transition: var(--transition);
+    }
+    .channel-item.active .ch-live-indicator { opacity: 1; animation: pulse 1.5s ease-in-out infinite; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state .material-symbols-outlined { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { font-size: 13px; }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .loading-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { margin-top: 14px; font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+
+    /* Responsive */
+    @media (max-width: 900px) { .sidebar { width: 300px; } }
+    @media (max-width: 768px) {
+      .main-container { flex-direction: column; }
+      .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); max-height: 45vh; }
+      .player-section { flex: none; }
+      .player-wrapper { aspect-ratio: 16/9; }
+      header { padding: 10px 16px; }
+      .now-playing { padding: 10px 16px; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <span class="material-symbols-outlined" style="font-size:20px;color:#fff">live_tv</span>
+    </div>
+    <span class="logo-text">StreamVault</span>
+  </div>
+  <div class="header-info">
+    <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+    <span class="channel-count" id="channelCount"></span>
+  </div>
+</header>
+
+<div class="main-container">
+  <div class="player-section">
+    <div class="player-wrapper">
+      <video-js id="main-player" class="video-js vjs-default-skin" controls preload="auto"></video-js>
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading stream...</div>
+      </div>
+    </div>
+    <div class="now-playing">
+      <div class="np-icon">
+        <span class="material-symbols-outlined" style="color:#fff;font-size:20px">tv</span>
+      </div>
+      <div class="np-details">
+        <div class="np-label">Now Playing</div>
+        <div class="np-channel-name" id="npName">Select a channel</div>
+        <div class="np-category" id="npCategory"></div>
+      </div>
+      <div class="np-status live" id="npStatus" style="display:none">
+        <span class="status-dot"></span> STREAMING
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <span class="material-symbols-outlined">playlist_play</span> Channels
+      </div>
+      <div class="search-box">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input type="text" id="searchInput" placeholder="Search channels..." autocomplete="off" />
+      </div>
+      <div class="category-tabs" id="categoryTabs"></div>
+    </div>
+    <div class="channel-list" id="channelList"></div>
+  </div>
+</div>
+
+<script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+<script>
+  const channels = [
+    { name: "Deepto TV HD",       url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1711/output/index.m3u8", category: "Entertainment" },
+    { name: "Bangla Vision",      url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1715/output/index.m3u8", category: "Entertainment" },
+    { name: "BTV",                url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1709/output/index.m3u8", category: "Entertainment" },
+    { name: "Al Jazeera HD",      url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1721/output/index.m3u8", category: "News" },
+    { name: "NTV",                url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1716/output/index.m3u8", category: "Entertainment" },
+    { name: "ATN Bangla",         url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1722/output/index.m3u8", category: "Entertainment" },
+    { name: "Channel I HD",       url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1723/output/index.m3u8", category: "Entertainment" },
+    { name: "Jamuna TV",          url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1701/output/index.m3u8", category: "News" },
+    { name: "ATN News",           url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1706/output/index.m3u8", category: "News" },
+    { name: "Channel 24 HD",      url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1703/output/index.m3u8", category: "News" },
+    { name: "Ekattor HD",         url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1705/output/index.m3u8", category: "News" },
+    { name: "Independent TV",     url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1704/output/index.m3u8", category: "News" },
+    { name: "Somoy",              url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1702/output/index.m3u8", category: "News" },
+    { name: "Zee Bangla HD",      url: "https://padmaonline.duckdns.org:8088/ZeeBanglaHD/index.m3u8", category: "Movies & Shows" },
+    { name: "Colors Bangla HD",   url: "https://padmaonline.duckdns.org:8088/ColorsBanglaHD/index.m3u8", category: "Movies & Shows" },
+    { name: "Zee TV HD",          url: "https://padmaonline.duckdns.org:8088/ZeeTVHD/index.m3u8", category: "Movies & Shows" },
+    { name: "Star Plus HD",       url: "https://padmaonline.duckdns.org:8088/StarPlusHD/index.m3u8", category: "Movies & Shows" },
+    { name: "Discovery HD",       url: "http://151.80.18.177:86/Discovery_HD/index.m3u8", category: "Documentary" },
+    { name: "HISTOIRE HD",        url: "http://151.80.18.177:86/Histoire/index.m3u8", category: "Documentary" },
+    { name: "T Sports HD",        url: "http://103.151.60.204/T-Sports/tracks-v1a1/mono.m3u8", category: "Sports" },
+    { name: "T Sports HD",        url: "http://103.151.60.204/T-Sports/tracks-v1a1/mono.m3u8", category: "Sports" },
+    { name: "ATN Bangla UK", url:"https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/atnbanglauk-off.stream/playlist.m3u8", category: "News" },
+    { name: "Star Jalsha HD",     url: "https://catchup.yuppcdn.net/amazonv2/36/preview/starjalsha/master/chunklist.m3u8", category: "Movies & Shows" },
+    { name: "Fancode HD",         url: "https://bldcmprod-cdn.toffeelive.com/cdn/live/sports_highlights/playlist.m3u8", category: "Sports" },
+    { name: "Star News HD",       url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1710/output/index.m3u8", category: "News" },
+    { name: "News 24 HD",         url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1709/output/index.m3u8", category: "News" },
+    { name: "Sangsad BD HD",      url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1713/output/index.m3u8", category: "News" },
+    { name: "Akash Promo HD",     url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1720/output/index.m3u8", category: "Entertainment" },
+    { name: "Islamic TV HD",      url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1724/output/index.m3u8", category: "Religious" },
+    { name: "DBC News HD",        url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1728/output/index.m3u8", category: "News" },
+    { name: "Channel 9 HD",       url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1729/output/index.m3u8", category: "Entertainment" },
+    { name: "Akash Sports VIP",   url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1730/output/index.m3u8", category: "Sports" },
+    { name: "Akash Sports VIP 2", url: "https://owrcovcrpy.gpcdn.net/bpk-tv/1731/output/index.m3u8", category: "Sports" },
+    {name: "Gopal bhar HD", url: "https://live20.bozztv.com/giatvplayout7/giatv-209611/index.m3u8", category: "Kids" },
+    {name: "Tom & Jerry HD", url: "https://live20.bozztv.com/giatvplayout7/giatv-208314/playlist.m3u8", category: "Kids"},
+    {name: "Cartoon HD", url: "https://d1eg24xrsfr6kv.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-b4b1bzxkt1uzo-prod/tg/tg/tg.m3u8", category: "Kids"},
+    {name: "Motu Patlu HD", url: "https://live20.bozztv.com/giatvplayout7/giatv-209622/index.m3u8", category: "KIds"},
+    {name: "BTV HD 2", url: "https://bdix.sm-monirulislam-exp.workers.dev/1709/output/index.m3u8", category: "Entertainment"},
+    {name: "Machranga HD", url: "https://bdix.sm-monirulislam-exp.workers.dev/1722/output/index.m3u8", category: "Entertainment"},
+    {name: "ATN NEWS HD", url: "https://bdix.sm-monirulislam-exp.workers.dev/1706/output/index.m3u8", category: "Entertainment"},
+    {name: "Bangla Vision HD", url: "https://bdix.sm-monirulislam-exp.workers.dev/1715/output/index.m3u8", category: "Entertainment"},
+    {name: "BHI Channel HD", url: "http://15.235.185.236/hls/bhi.m3u8", category: "Entertainment"},
+    {name: "Channel S HD", url: "http://103.229.254.25:7001/play/a060/index.m3u8", category: "Entertainment"},
+    {name: "Channel S UK HD", url: "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/chsukoff.stream/playlist.m3u8", category: "Entertainment"},
+    {name: "channel 24 HD", url: "https://bdix.sm-monirulislam-exp.workers.dev/1703/output/index.m3u8", category: "News"},
+    {name: "channel Europe HD", url: "https://stream.channeleuropetvboxlondon.co.uk/live/channeleurope/chunklist_w572284654.m3u8", category: "Entertainment"},
+    {name: "CBN TV HD", url: "https://live.cbntvusa.net/hls/cbntv/index.m3u8", category: "Entertainment"},
+    {name: "Deepto TV 3 HD", url: "https://byphdgllyk.gpcdn.net/hls/deeptotv/index.m3u8", category: "Entertainment"},
+    {name: "Deshi TV HD", url: "https://deshitv.deshitv24.net/live/myStream/playlist.m3u8", category: "Entertainment"},
+    {name: "ETV HD", url: "http://210.4.72.204/hls-live/livepkgr/_definst_/liveevent/livestream3.m3u8", category: "Entertainment"},
+    {name: "Gazi TV HD", url: "https://tvsen1.aynaott.com/Ravc7gPCZpxk/index.m3u8", category: "Entertainment"},
+    {name: "Green TV HD", url: "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/greentv.stream/playlist.m3u8", category: "Entertainment"},
+    {name: "Jonmovumi ", url: "https://jtvs.ncare.live/Gznr84Woj7UEye3OPVeWq2ForboWAgdV/jonmobhumitv.stream/tracks-v1a1/mono.m3u8", category: "Entertainment"},
+    {name: "Jago News 24 HD", url: "https://app.ncare.live/live-orgin/jagonews24.stream/playlist.m3u8", category: "News"},
+    {name: "Movie Bangla", url: "http://alvetv.com/moviebanglatv/8080/index.m3u8", category: "Movies & Shows"},
+    {name: "NRB TV", url: "https://app.ncare.live/live-orgin/nrb-eu.stream/playlist.m3u8", category: "Entertainment"},
+    {name: "Peace TV BANGLA HD", url: "https://dzkyvlfyge.erbvr.com/PeaceTvBangla/index.m3u8", category: "Religious"},
+    {name: "Probashi TV HD", url: "http://158.69.24.53:8080/probashi_tv/tracks-v1a1/mono.m3u8", category: "Entertainment"},
+    {name: "Enter 10 Bangla HD", url: "https://live-bangla.akamaized.net/liveabr/pub-iobanglakp3sff/live_720p/chunks.m3u8", category: "Entertainment"},
+    {name: "Bangla TV HD", url: "https://live-stream.utkalbongo.com/hls/livebanglatvstream.m3u8", category: "Entertainment"},
+    {name: "CBN TV USA", url: "https://live.cbntvusa.net/hls/cbntv/index.m3u8", category: "Entertainment"},
+    {name: "BHI Channel", url: "http://15.235.185.236/hls/bhi.m3u8", category: "Entertainment"},
+    {name: "ZB Cartoon HD", url: "https://server.zillarbarta.com/zbcatun/video.m3u8", category: "Kids" },
+    {name: "Zee BAngla HD", url: "https://yupptvcatchupire.yuppcdn.net/preview/zeebangla/2500.m3u8", category: "Entertainment" },
+    {name: "Colors Bangla HD", url: "https://yupptvcatchupire.yuppcdn.net/preview/colorsbanglahd/800.m3u8", category: "Entertainment" },
+    {name: "Enter 10 Bangla HD", url: "https://amg01448-samsungin-enterr10bangla-samsungin-ad-gg.amagi.tv/playlist/amg01448-samsungin-enterr10bangla-samsungin/playlist.m3u8", category: "Entertainment" },
+    {name: "News 18 Bangla HD", url: "https://amg01448-samsungin-news18bangla-samsungin-ad-qy.amagi.tv/playlist/amg01448-samsungin-news18bangla-samsungin/playlist.m3u8", category: "News" },
+    {name: "saudi Quran HD", url: "https://cdn-globecast.akamaized.net/live/eds/saudi_quran/hls_roku/index.m3u8", category: "Religious" },
+    {name: "Travel XP HD", url: "https://travelxp-travelxp-1-eu.rakuten.wurl.tv/playlist.m3u8", category: "Documentary" },
+    {name: "Bangla Beats", url: "https://tplay.live/originals/bengali-beats/index.m3u8", category: "Music" },
+    {name: "Fox Crictet HD", url: "http://y3fqd48g.megatv.fun/iptv/NRLXRWSBWBPLN4/19146/index.m3u8", category: "Sports" },
+    {name: "Bein Sports HD", url: "https://bein-esp-xumo.amagi.tv/playlistR1080p.m3u8", category: "Sports" },
+    {name: "Bangla Movies HD", url: "https://tplay.live/playlist/movies/bangla-movies/index.m3u8", category: "Movies & Shows" },
+    {name: "JB Cinema HD", url: "https://server.zillarbarta.com/ZBCINEMA/index.m3u8", category: "Movies & Shows" },
+    {name: "Bangla Beats HD ", url: "https://tplay.live/originals/bengali-beats/index.m3u8", category: "Music" },
+    {name: "JB Music", url: "https://server.zillarbarta.com/zbmusic/tracks-v1a1/mono.m3u8", category: "Music" },
+    {name: "R Plus", url: "https://thelegitpro.in/pntv/rplusnews24x7/tracks-v1a1/mono.m3u8", category: "News" },
+    {name: "Gopal Bhar HD", url: "https://live20.bozztv.com/giatvplayout7/giatv-209611/index.m3u8", category: "Kids" },
+    {name: "Star Jalsha HD", url: "https://yupptvcatchupire.yuppcdn.net/preview/starjalsha/1800.m3u8", category: "Movies & Shows" },
+    {name: "Bangla Jago HD", url: "http://banglajagotv.livebox.co.in:80/banglajagohls/24x7.m3u8", category: "Entertainment" },
+    {name: "Calcutta News", url: "https://akdnetwork.co.in/live/cnnew/index.m3u8", category: "News" },
+    {name: "Republic Bangla HD", url: "https://vg-republictvyupp.akamaized.net/ptnr-yuppt/v1/manifest/611d79b11b77e2f571934fd80ca1413453772ac7/vglive-sk-613605/93d674ab-f7a0-404e-88b2-b4f163373dbe/0.m3u8", category: "News" },
+    {name: "TV9 Bangla HD", url: "https://dyjmyiv3bp2ez.cloudfront.net/pub-iotv9banaen8yq/liveabr/playlist.m3u8", category: "News" },
+    {name: "sansad Hindi", url: "https://d2lk5u59tns74c.cloudfront.net/out/v1/fff8f20221d5456e8922e689d71dedc3/index.m3u8", category: "News" },
+    {name: "Dangal TV HD", url: "https://live-dangal.akamaized.net/liveabr/pub-iodang10p4al/live_720p/chunks.m3u8", category: "Entertainment" },
+    {name: "Dangal Tv 2 HD", url: "https://live-dangal2.akamaized.net/liveabr/playlist.m3u8", category: "Entertainment" },
+    {name: "DD Bharati HD", url: "https://d2lk5u59tns74c.cloudfront.net/out/v1/67cec794d8b14f9ba21f73924ac65797/index.m3u8", category: "Entertainment" },
+    {name: "DD National HD", url: "https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/40492a64c1db4a1385ba1a397d357d3a/index.m3u8", category: "Entertainment" },
+    {name: "DD Urdu HD", url: "https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/9b91e9007e754db39a8b32c6bfc5b24a/index.m3u8", category: "Entertainment" },
+    {name: "Epic TV HD", url: "https://cc-czbq30x55knit.akamaized.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-czbq30x55knit/DIYC/PMSL/IN10/Epic_TV_IN_B/Epic_TV_IN_B.m3u8", category: "Entertainment" },
+    {name: "Epic Hindi", url: "https://cc-p1izg43bk7sj5.akamaized.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-p1izg43bk7sj5/DIYC/PMSL/IN10/Nazara_IN_B/Nazara_IN_B.m3u8", category: "Entertainment" },
+    {name: "pardesi Tv", url: "http://stream.pardesitv.online/pardesi/tracks-v1a1/mono.m3u8", category: "Entertainment" },
+    {name: "Bollywood Movies HD", url: "https://tplay.live/playlist/movies/bollywood-movies/index.m3u8", category: "Movies & Shows" },
+    {name: "Goldmines HD", url: "http://mag.king-4k.cc:80/live/C1645263A1D245C/1sFTVBSVCP/1441441.m3u8", category: "Movies & Shows" },
+    {name: "ZEE Bollywood HD", url: "http://212.102.34.8:9080/ZeeBollywood/video.m3u8", category: "Movies & Shows" },
+    {name: "Aaj ki khabar HD", url: "https://server.livelegitpro.in/aajkikhabar/aajkikhabar/tracks-v1a1/mono.m3u8", category: "News" },
+    {name: "Aj talk in HD", url: "https://aajtaklive-amd.akamaized.net/hls/live/2014416/aajtak/aajtaklive/live_720p/chunks.m3u8", category: "News" },
+    {name: "Aap Ki adalat HD", url: "https://amg01550-indiatv-indiatv-aapkiadalat-mi-xiaomi-n5tuk.amagi.tv/playlist/amg01550-indiatv-indiatv-aapkiadalat-mi-xiaomi/playlist.m3u8", category: "Entertainment" },
+    {name: "awaz india", url: "http://awaazindia.livebox.co.in/AwaazIndaTVhls/Live.m3u8", category: "Entertainment" },
+    {name: "Bharat Express HD", url: "https://stream1.livebox.co.in/VCAREhls/live.m3u8", category: "News" },
+    {name: "CNN Cawaz", url: "https://n18syndication.akamaized.net/bpk-tv/CNBC_Awaaz_NW18_MOB/output01/CNBC_Awaaz_NW18_MOB-audio_98834_hin=98800-video=1272000.m3u8", category: "News" },
+    {name: "Times Now bharat", url: "https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/a5ee7c4e7a2a4b15a22a3bcf523b9776/index.m3u8", category: "News" },
+    {name: "Blomberg HD", url: "https://www.bloomberg.com/media-manifest/streams/eu.m3u8", category: "News" },
+    {name: "Sky News HD", url: "https://d39chvnxm26pgp.cloudfront.net/v1/master/72588bff830dec7b26d7cbbf5f3c24928aec5c03/cc-sthen6ms4vxgv-stage/WNSFO/ABR.m3u8", category: "News" },
+    {name: "TRT World HD", url: "https://tv-trtworld.medya.trt.com.tr/master.m3u8", category: "News" },
+    {name: "Doremon", url: "https://live20.bozztv.com/giatvplayout7/giatv-209902/tracks-v1a1/mono.ts.m3u8", category: "Kids" },
+    {name: "Hooray Rymes", url: "https://cc-hqignh3tex8xc.akamaized.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-hqignh3tex8xc/OTM/OTM_KidsToonsHindi-SCTE_SAMSUNG/playlist.m3u8", category: "Kids" },
+    {name: "CH CH Hamilton HD", url: "https://d1wal6k3d7ssin.cloudfront.net/out/v1/ea91db0906c847a4931b46a9ec36e77b/index.m3u8", category: "Documentary" },
+    {name: "Moon Bug HD", url: "https://dq2a9ghraf7sw.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-zxq18dopv0o6q/Moonbug.m3u8", category: "Kids" },
+    {name: "PBS KIDS HD", url: "https://2-fss-2.streamhoster.com/pl_140/amlst:200914-1298290/playlist.m3u8", category: "Kids" },
+    {name: "Super Toons HD", url: "https://d3bxvshzgfq6in.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-8a0c583l9gryw/feed/samsung/streams/SUPERTOONS_EN/master.m3u8?token=737aa2c3f17862a448f403cd2ac2b5ef1a0c413e1cf080a13a19cea99119221f&ads.device_did=%7BPSID%7D&ads.device_dnt=%7BTARGETOPT%7D&ads.app_domain=%7BAPP_DOMAIN%7D&ads.app_name=%7BAPP_NAME%7D&ads.consent=%7BTC_STRING%7D&ads.ssai_vendor=SSSLIVE&ads.service_id=GBBD5100001HL", category: "Kids" },
+    {name: "Tinny Pop HD", url: "https://amg01753-narrativeentert-tinypop-samsunguk-hvvb7.amagi.tv/ts-eu-w1-n2/playlist/amg01753-narrativeentert-tinypop-samsunguk/playlist.m3u8", category: "Kids" },
+    {name: "Cartoon Network", url: "https://vodzong.mjunoon.tv:8087/streamtest/cartoon-network-87/playlist.m3u8", category: "Kids" },
+  ];
+
+  const iconColors = [
+    ['#6c5ce7','#a29bfe'], ['#e74c3c','#fd79a8'], ['#00b894','#55efc4'],
+    ['#0984e3','#74b9ff'], ['#fdcb6e','#f39c12'], ['#e17055','#fab1a0'],
+    ['#00cec9','#81ecec'], ['#636e72','#b2bec3']
+  ];
+
+  function getIconColor(i) { return iconColors[i % iconColors.length]; }
+  function getInitials(name) {
+    const w = name.trim().split(/\s+/);
+    return w.length === 1 ? w[0].substring(0, 2) : w[0][0] + w[1][0];
+  }
+
+  const player = videojs('main-player', {
+    fluid: false, fill: true, responsive: true,
+    html5: { vhs: { overrideNative: true }, nativeAudioTracks: false, nativeVideoTracks: false }
+  });
+
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const npName = document.getElementById('npName');
+  const npCategory = document.getElementById('npCategory');
+  const npStatus = document.getElementById('npStatus');
+  const channelListEl = document.getElementById('channelList');
+  const searchInput = document.getElementById('searchInput');
+  const categoryTabsEl = document.getElementById('categoryTabs');
+  const channelCountEl = document.getElementById('channelCount');
+
+  let activeElement = null;
+  let activeFilter = 'All';
+
+  player.on('waiting', () => loadingOverlay.classList.add('visible'));
+  player.on('playing', () => loadingOverlay.classList.remove('visible'));
+  player.on('error', () => loadingOverlay.classList.remove('visible'));
+
+  function loadChannel(channel, element) {
+    loadingOverlay.classList.add('visible');
+    player.src({ src: channel.url, type: 'application/x-mpegURL' });
+    player.play().catch(() => loadingOverlay.classList.remove('visible'));
+    npName.textContent = channel.name;
+    npCategory.textContent = channel.category;
+    npStatus.style.display = 'flex';
+    if (activeElement) activeElement.classList.remove('active');
+    element.classList.add('active');
+    activeElement = element;
+  }
+
+  const categories = ['All', ...new Set(channels.map(c => c.category))];
+  categories.forEach(cat => {
+    const tab = document.createElement('div');
+    tab.className = 'cat-tab' + (cat === 'All' ? ' active' : '');
+    tab.textContent = cat;
+    tab.onclick = () => {
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeFilter = cat;
+      renderChannels();
+    };
+    categoryTabsEl.appendChild(tab);
+  });
+
+  searchInput.addEventListener('input', () => renderChannels());
+
+  function renderChannels() {
+    const query = searchInput.value.toLowerCase().trim();
+    channelListEl.innerHTML = '';
+    const filtered = channels.filter(ch => {
+      const matchesSearch = ch.name.toLowerCase().includes(query);
+      const matchesCat = activeFilter === 'All' || ch.category === activeFilter;
+      return matchesSearch && matchesCat;
+    });
+
+    if (filtered.length === 0) {
+      channelListEl.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>No channels found</p></div>';
+      return;
+    }
+
+    filtered.forEach((channel, idx) => {
+      const globalIdx = channels.indexOf(channel);
+      const colors = getIconColor(globalIdx);
+      const div = document.createElement('div');
+      div.className = 'channel-item';
+      div.style.animationDelay = idx * 0.03 + 's';
+      if (activeElement && activeElement.dataset.channelName === channel.name) {
+        div.classList.add('active');
+        activeElement = div;
+      }
+      div.dataset.channelName = channel.name;
+      div.innerHTML = '<div class="ch-number">' + (globalIdx + 1) + '</div>'
+        + '<div class="ch-icon" style="background:linear-gradient(135deg,' + colors[0] + ',' + colors[1] + ')">' + getInitials(channel.name) + '</div>'
+        + '<div class="ch-info"><div class="ch-name">' + channel.name + '</div><div class="ch-category">' + channel.category + '</div></div>'
+        + '<div class="ch-live-indicator"></div>';
+      div.onclick = () => loadChannel(channel, div);
+      channelListEl.appendChild(div);
+    });
+  }
+
+  channelCountEl.textContent = channels.length + ' Channels';
+  renderChannels();
+  const firstItem = channelListEl.querySelector('.channel-item');
+  if (firstItem) loadChannel(channels[0], firstItem);
+</script>
+</body>
+</html>
